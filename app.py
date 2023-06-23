@@ -17,6 +17,12 @@ from streamlit_extras.mandatory_date_range import date_range_picker
 from streamlit_extras.no_default_selectbox import selectbox
 from streamlit_extras.switch_page_button import switch_page
 
+st.set_page_config(
+    page_title="Pelampung.AI",
+    page_icon="images\logo-small.png",
+    layout="centered",
+)
+
 kode_cuaca = {
     0: "☀️",  # Cerah / Clear Skies
     1: "⛅",   # Cerah Berawan / Partly Cloudy
