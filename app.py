@@ -19,7 +19,7 @@ from streamlit_extras.switch_page_button import switch_page
 
 st.set_page_config(
     page_title="Pelampung.AI",
-    page_icon="images\logo-small.png",
+    page_icon="images/logo-small.png",
     layout="centered",
 )
 
@@ -211,6 +211,7 @@ def show_dashboard():
     flood_data = get_flood_data()
     years = sorted(flood_data['tahun'].unique())
     selected_year = st.slider("Pilih Rentang Tahun", min_value=int(min(years)), max_value=int(max(years)), value=(2023, 2023))
+
     filtered_data = flood_data[(flood_data['tahun'] >= selected_year[0]) & (flood_data['tahun'] <= selected_year[1])]
     map = folium.Map(location=[-2.5489, 118.0149], zoom_start=4)
 
@@ -359,10 +360,9 @@ def get_climate_data(latitude, longitude, tanggal):
     # Ambil data iklim dari fungsi point
     daily_data = point(
         coordinates=(latitude, longitude),
-        parameters=["ALLSKY_SFC_SW_DWN", "ALLSKY_SFC_LW_DWN", "CLOUD_AMT", "TS",
-                    "PRECTOTCORR", "T10M", "T10M_MAX", "T10M_MIN", "WD10M", "WS10M",
-                    "WS10M_MAX", "RH2M", "QV2M", 'TQV', 'PS', 'GWETTOP',
-                    'PW', 'ALLSKY_KT'],
+        parameters=["ALLSKY_SFC_SW_DWN", "ALLSKY_SFC_LW_DWN", "TS", "PRECTOTCORR",
+                    "T10M", "T10M_MAX", "T10M_MIN", "WD10M", "WS10M", "WS10M_MAX",
+                    "RH2M", "QV2M", 'TQV', 'PS'],
         start=tanggal_date,
         end=tanggal_date,
         resolution="daily",
@@ -373,7 +373,6 @@ def get_climate_data(latitude, longitude, tanggal):
     data_iklim = {
         "ALLSKY_SFC_SW_DWN": daily_data["ALLSKY_SFC_SW_DWN"].values[0],
         "ALLSKY_SFC_LW_DWN": daily_data["ALLSKY_SFC_LW_DWN"].values[0],
-        "CLOUD_AMT": daily_data["CLOUD_AMT"].values[0],
         "TS": daily_data["TS"].values[0],
         "PRECTOTCORR": daily_data["PRECTOTCORR"].values[0],
         "T10M": daily_data["T10M"].values[0],
@@ -385,10 +384,7 @@ def get_climate_data(latitude, longitude, tanggal):
         "RH2M": daily_data["RH2M"].values[0],
         "QV2M": daily_data["QV2M"].values[0],
         "TQV": daily_data["TQV"].values[0],
-        "PS": daily_data["PS"].values[0],
-        "GWETTOP": daily_data["GWETTOP"].values[0],
-        "PW": daily_data["PW"].values[0],
-        "ALLSKY_KT": daily_data["ALLSKY_KT"].values[0]
+        "PS": daily_data["PS"].values[0]
     }
 
     return data_iklim
@@ -428,15 +424,19 @@ def show_prediction_page():
                 # Handle connection error
                 print("Coba lagi: Terjadi kesalahan koneksi. Silakan muat ulang dan coba lagi.")
             
-            if location_data:
-                latitude = location_data.latitude
-                longitude = location_data.longitude
+            try:
+                if location_data:
+                    latitude = location_data.latitude
+                    longitude = location_data.longitude
 
-                st.write("Latitude:", latitude)
-                st.write("Longitude:", longitude)
-            else:
-                st.error("Lokasi tidak valid. Silakan pilih lokasi yang lain.")
-                return
+                    st.write("Latitude:", latitude)
+                    st.write("Longitude:", longitude)
+                else:
+                    st.error("Lokasi tidak valid. Silakan pilih lokasi yang lain.")
+                    return
+            except ValueError:
+                # Handle connection error
+                print("Coba lagi: Terjadi kesalahan koneksi. Silakan muat ulang dan coba lagi.")
 
         with col2:
             if location_data is not None:
@@ -494,6 +494,7 @@ def show_prediction_page():
 
     # Select the machine learning algorithm
     model_option = selectbox("Pilih Algoritma Model", ["LightGBM", "Random Forest", "XGBoost"], no_selection_label='Algoritma')
+    st.info("Lihat halaman tutorial untuk memilih model yang sesuai.")
 
      # Select the date input type
     date_input_type = st.radio("Pilih Jenis Input Tanggal", ["Tanggal Satuan", "Rentang Tanggal"])
@@ -550,7 +551,6 @@ def show_prediction_page():
                     'pekan_ke': [pekan_ke],
                     'ALLSKY_SFC_SW_DWN': [climate_data['ALLSKY_SFC_SW_DWN']],
                     'ALLSKY_SFC_LW_DWN': [climate_data['ALLSKY_SFC_LW_DWN']],
-                    'CLOUD_AMT': [climate_data['CLOUD_AMT']],
                     'TS': [climate_data['TS']],
                     'PRECTOTCORR': [climate_data['PRECTOTCORR']],
                     'T10M': [climate_data['T10M']],
@@ -562,10 +562,7 @@ def show_prediction_page():
                     'RH2M': [climate_data['RH2M']],
                     'QV2M': [climate_data['QV2M']],
                     'TQV': [climate_data['TQV']],
-                    'PS': [climate_data['PS']],
-                    'GWETTOP': [climate_data['GWETTOP']],
-                    'PW': [climate_data['PW']],
-                    'ALLSKY_KT': [climate_data['ALLSKY_KT']]
+                    'PS': [climate_data['PS']]
                 }, index=[0])
 
                 # Load the machine learning model based on the selected option
@@ -606,21 +603,17 @@ def show_prediction_page():
                     st.metric("Temperatur (10 Meter)", f"{climate_data['T10M']} °C")
                     st.metric("Temperatur Maksimum (10 Meter)", f"{climate_data['T10M_MAX']} °C")
                     st.metric("Temperatur Minimum (10 Meter)", f"{climate_data['T10M_MIN']} °C")
-                    st.metric("Kelembaban Spesifik (2 Meter)", f"{climate_data['QV2M']} g/kg")
                     st.metric("Kelembaban Relatif (2 Meter)", f"{climate_data['RH2M']} %")
 
                 with col2:
+                    st.metric("Kelembaban Spesifik (2 Meter)", f"{climate_data['QV2M']} g/kg")
                     st.metric("Presipitasi", f"{climate_data['PRECTOTCORR']} mm")
-                    st.metric("Jumlah Awan", f"{climate_data['CLOUD_AMT']} %")
+                    st.metric("Kadar Air Kolom Jatuh", f"{climate_data['TQV']} mm")
                     st.metric("Radiasi Gelombang Panjang ke Permukaan", f"{climate_data['ALLSKY_SFC_LW_DWN']} W/m²")
                     st.metric("Radiasi Gelombang Pendek ke Permukaan", f"{climate_data['ALLSKY_SFC_SW_DWN']} W/m²")
-                    st.metric("Indeks Kecerahan Insolasi Langit", f"{climate_data['ALLSKY_KT']}")
-                    st.metric("Tekanan Permukaan", f"{climate_data['PS']} hPa")
 
                 with col3:
-                    st.metric("Kadar Air Kolom Jatuh", f"{climate_data['TQV']} mm")
-                    st.metric("Kadar Air Tanah Permukaan", f"{climate_data['GWETTOP']} mm")
-                    st.metric("Kadar Air Jatuh", f"{climate_data['PW']} mm")
+                    st.metric("Tekanan Permukaan", f"{climate_data['PS']} hPa")
                     st.metric("Arah Angin (10 Meter)", f"{climate_data['WD10M']}°")
                     st.metric("Kecepatan Angin (10 Meter)", f"{climate_data['WS10M']} m/s")
                     st.metric("Kecepatan Angin Maksimum (10 Meter)", f"{climate_data['WS10M_MAX']} m/s")
@@ -692,7 +685,6 @@ def show_prediction_page():
                         'pekan_ke': [pekan_ke],
                         'ALLSKY_SFC_SW_DWN': [climate_data['ALLSKY_SFC_SW_DWN']],
                         'ALLSKY_SFC_LW_DWN': [climate_data['ALLSKY_SFC_LW_DWN']],
-                        'CLOUD_AMT': [climate_data['CLOUD_AMT']],
                         'TS': [climate_data['TS']],
                         'PRECTOTCORR': [climate_data['PRECTOTCORR']],
                         'T10M': [climate_data['T10M']],
@@ -705,9 +697,6 @@ def show_prediction_page():
                         'QV2M': [climate_data['QV2M']],
                         'TQV': [climate_data['TQV']],
                         'PS': [climate_data['PS']],
-                        'GWETTOP': [climate_data['GWETTOP']],
-                        'PW': [climate_data['PW']],
-                        'ALLSKY_KT': [climate_data['ALLSKY_KT']]
                     })
 
                     # Load the machine learning model based on the selected option
@@ -852,18 +841,16 @@ def show_tutorial_page():
         2. Setelah memasukkan latitude dan longitude, aplikasi akan melakukan reverse geocode untuk mendapatkan alamat berdasarkan koordinat yang Anda masukkan. Alamat tersebut akan ditampilkan.
 
         ### Pilih Algoritma Model
-        Setelah memilih lokasi, Anda akan diminta untuk memilih algoritma model yang akan digunakan untuk prediksi. Tiga opsi algoritma yang tersedia adalah
-        - LightGBM,
+        Setelah memilih lokasi, Anda akan diminta untuk memilih algoritma model yang akan digunakan untuk prediksi. Tiga opsi algoritma yang tersedia adalah:
 
-            LightGBM adalah algoritma Boosting yang dirancang khusus untuk pemrosesan data berukuran besar dan memiliki performa yang baik dalam memodelkan variabel lokasi. Algoritma ini menggunakan pendekatan Gradient Boosting dan menggunakan keuntungan dalam pembelajaran berbasis pohon untuk menghasilkan prediksi yang akurat. LightGBM biasanya efisien dalam pemrosesan data dengan jumlah fitur yang besar dan dapat mengatasi masalah kelas tidak seimbang. Jika variabel lokasi menjadi faktor penting dalam prediksi banjir, menggunakan LightGBM bisa menjadi pilihan yang baik.
-        - Random Forest,
+        - **LightGBM:** Algoritma ini memiliki performa yang baik dalam memodelkan variabel lokasi seperti lintang dan bujur, sehingga cocok untuk analisis yang fokus pada faktor spasial. LightGBM menggunakan pendekatan Gradient Boosting dan keuntungan dari pembelajaran berbasis pohon untuk menghasilkan prediksi yang akurat. Jika variabel lokasi menjadi faktor penting dalam prediksi banjir, LightGBM merupakan pilihan yang tepat.
 
-            Random Forest juga merupakan algoritma yang berbasis pohon, tetapi menggunakan pendekatan ensemble learning. Algoritma ini dapat memberikan hasil yang baik dalam memodelkan variabel curah hujan. Random Forest bekerja dengan membuat sejumlah pohon keputusan secara acak dan menggabungkan prediksi dari setiap pohon untuk menghasilkan hasil akhir. Keunggulan Random Forest adalah kemampuannya untuk menangani variabel numerik dan kategorikal, serta mampu mengatasi masalah overfitting. Jika variabel curah hujan menjadi faktor penting dalam prediksi banjir, Random Forest bisa menjadi pilihan yang tepat.
-        - dan XGBoost.
-            
-            XGBoost adalah algoritma Boosting yang juga menggunakan pendekatan Gradient Boosting. Algoritma ini dikenal karena performanya yang tinggi dalam mengatasi masalah regresi dan klasifikasi. XGBoost dapat bekerja dengan baik dalam memodelkan variabel tanggal. Algoritma ini memiliki kemampuan untuk menangani data dengan ukuran besar, menangani fitur-fitur yang tidak terstruktur, dan memiliki fitur pengoptimalan yang kuat. Jika variabel tanggal menjadi faktor penting dalam prediksi banjir, XGBoost dapat menjadi pilihan yang optimal.
+        - **Random Forest:** Algoritma ini dapat memberikan hasil yang baik dalam memodelkan variabel curah hujan seperti curah hujan dan kualitas uap air. Dengan pendekatan ensemble learning, Random Forest menggabungkan prediksi dari beberapa pohon keputusan untuk menghasilkan hasil akhir. Keunggulan Random Forest terletak pada kemampuannya dalam menangani variabel numerik dan kategorikal, serta mampu mengatasi masalah overfitting. Jika variabel curah hujan menjadi faktor penting dalam prediksi banjir, Random Forest merupakan pilihan yang tepat.
+
+        - **XGBoost:** Algoritma ini menggunakan pendekatan Gradient Boosting dan dikenal karena performanya yang tinggi dalam mengatasi masalah regresi dan klasifikasi. XGBoost dapat bekerja dengan baik dalam memodelkan variabel tanggal seperti hari, sehingga cocok digunakan dalam analisis yang melibatkan tren temporal. Selain itu, XGBoost memiliki kemampuan untuk menangani data dengan ukuran besar, fitur-fitur yang tidak terstruktur, dan fitur pengoptimalan yang kuat. Jika variabel tanggal menjadi faktor penting dalam prediksi banjir, XGBoost merupakan pilihan yang optimal.
         
-        Anda dapat memilih salah satu dari opsi tersebut sebagai model prediksi.
+        Anda dapat memilih salah satu dari opsi tersebut sebagai model prediksi. Dengan mempertimbangkan preferensi dan keunggulan masing-masing algoritma, pemilihan algoritma yang tepat dapat memberikan hasil yang optimal dalam pemodelan fitur-fitur tersebut.
+
         > Penting untuk diingat bahwa pemilihan algoritma tergantung pada data yang Anda miliki dan karakteristiknya. Evaluasi dan eksperimen dengan beberapa algoritma tersebut dapat membantu Anda menentukan model terbaik untuk prediksi banjir.
 
         ### Pilih Jenis Input Tanggal
