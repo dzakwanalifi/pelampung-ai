@@ -210,9 +210,8 @@ def show_dashboard():
     st.subheader("Peta Kejadian Banjir di Indonesia (2003-2023)")
     flood_data = get_flood_data()
     years = sorted(flood_data['tahun'].unique())
-    selected_year = st.select_slider("Pilih Tahun", options=years, value=2023)
-
-    filtered_data = flood_data[flood_data['tahun'] == selected_year]
+    selected_year = st.slider("Pilih Rentang Tahun", min_value=int(min(years)), max_value=int(max(years)), value=(2023, 2023))
+    filtered_data = flood_data[(flood_data['tahun'] >= selected_year[0]) & (flood_data['tahun'] <= selected_year[1])]
     map = folium.Map(location=[-2.5489, 118.0149], zoom_start=4)
 
     cluster_banjir = MarkerCluster(name='Banjir').add_to(map)
@@ -223,7 +222,6 @@ def show_dashboard():
         folium.Marker(location=[lat, lon], popup=popup).add_to(cluster_banjir)
 
     folium.LayerControl().add_to(map)
-
     # Tampilkan peta dalam Streamlit
     folium_static(map)
     st.write("Sumber data: BNPB")
