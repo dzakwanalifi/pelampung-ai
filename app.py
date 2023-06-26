@@ -877,7 +877,6 @@ def show_tutorial_page():
         
         ---""")
 
-
 # Main function
 def main():
     st.sidebar.image("images/logo.png", use_column_width=True)
@@ -890,5 +889,19 @@ def main():
     elif page == "📄 Tutorial":
         show_tutorial_page()
 
+    st.sidebar.markdown(
+        '''
+        ## Credits
+        **Dosen Pembimbing:**
+
+        Sachnaz Desta Oktarina, S.Stat., M.Agr., Ph.D.
+        
+        **Anggota Kelompok:**
+        - Muhammad Dzakwan Alifi
+        - Indra Mahib Zuhair Riyanto
+        - Zaima Firoos Likan
+        '''
+    )
+    
 if __name__ == "__main__":
     main()
